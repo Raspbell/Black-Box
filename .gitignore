@@ -73,3 +73,4 @@ crashlytics-build.properties
 
 # Bakery asset の生成物（大容量のライトベイクデータ等）を除外
 /[Aa]ssets/Bakery/
+/[Aa]ssets/Editor/x64/
