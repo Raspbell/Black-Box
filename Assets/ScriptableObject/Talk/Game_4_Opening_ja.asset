@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 437d9dd34c86e02419fb10ed35fd85ed, type: 3}
+  m_Name: Game_4_Opening_ja
+  m_EditorClassIdentifier: 
+  catTexts:
+  - "\u3082\u3046\u3059\u3063\u304B\u308A\u771F\u3063\u6697"
+  - "\u30DC\u30AF\u3067\u3082\u30AE\u30EA\u30AE\u30EA\u898B\u3048\u308B\u304F\u3089\u3044\u3060\u306D"
+  - "\u3048\uFF1F\u306A\u3093\u3067\u305D\u3093\u306A\u306B\u6697\u3044\u306E\u304C\u5E73\u6C17\u306A\u306E\u304B\u3063\u3066\uFF1F"
+  - "...\u305F\u3060\u6163\u308C\u3066\u308B\u3060\u3051\u3060\u3088"
+  - "\u6C17\u3092\u3064\u3051\u3066\u9032\u3082\u3046"

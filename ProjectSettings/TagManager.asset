@@ -7,6 +7,9 @@ TagManager:
   - floor
   - trap
   - respawn
+  - goal
+  - flag
+  - key
   layers:
   - Default
   - TransparentFX

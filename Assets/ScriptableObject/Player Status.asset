@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d49ac60ef8253d946a2d3a407c2adb8e, type: 3}
   m_Name: Player Status
   m_EditorClassIdentifier: 
-  walkSpeed: 5
+  walkSpeed: 600
   airControlMultiplier: 0.2
   jumpPower: 80
   minJumpPower: 30

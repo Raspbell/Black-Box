@@ -1,16 +1,20 @@
 using UnityEngine;
+using DG.Tweening;
 
 public class Flag : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    public bool isFlagActivated = false;
 
-    // Update is called once per frame
-    void Update()
+    public void OnFlagTouched()
     {
-        
+        if (isFlagActivated)
+        {
+            return;
+        }
+
+        Sequence sequence = DOTween.Sequence();
+        sequence.Append(transform.DOLocalMoveY(1f, 0.5f).SetRelative().SetLoops(2, LoopType.Yoyo));
+        sequence.Join(transform.DOLocalRotate(new Vector3(0, 720, 0), 1f, RotateMode.FastBeyond360)).SetRelative();
+        isFlagActivated = true;
     }
 }

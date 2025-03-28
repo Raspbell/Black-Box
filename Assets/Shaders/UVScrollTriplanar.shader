@@ -1,4 +1,4 @@
-Shader "Universal Render Pipeline/Custom/UVScrollTriplanarEmission"
+Shader "Universal Render Pipeline/Custom/UVScrollTriplanarEmission_HDR"
 {
     Properties
     {
@@ -8,8 +8,8 @@ Shader "Universal Render Pipeline/Custom/UVScrollTriplanarEmission"
         _ScrollSpeed ("Scroll Speed", Vector) = (1, 1, 0, 0)
         // テクスチャのタイリング倍率（任意に調整可能）
         _Tiling ("Tiling", Float) = 1.0
-        // エミッションカラーのプロパティ（エミッションの強度・色を指定）
-        _EmissionColor ("Emission Color", Color) = (0, 0, 0, 1)
+        // エミッションカラーのプロパティ（エミッションの強度・色を指定、HDR対応）
+        [HDR]_EmissionColor ("Emission Color", Color) = (0, 0, 0, 1)
         // エミッションテクスチャのプロパティ（デフォルトは黒テクスチャ）
         _EmissionTex ("Emission Texture", 2D) = "black" {}
     }
@@ -97,8 +97,8 @@ Shader "Universal Render Pipeline/Custom/UVScrollTriplanarEmission"
                 return tex_x * blending.x + tex_y * blending.y + tex_z * blending.z;
             }
 
-            // フラグメントシェーダー
-            half4 frag(Varyings IN) : SV_Target
+            // フラグメントシェーダー（HDR対応のため、戻り値をfloat4に変更）
+            float4 frag(Varyings IN) : SV_Target
             {
                 // 経過時間に応じたUVスクロールのオフセットを計算
                 float timeValue = _Time.y;
@@ -108,11 +108,11 @@ Shader "Universal Render Pipeline/Custom/UVScrollTriplanarEmission"
                 float4 baseColor = TriplanarSample(_MainTex, sampler_MainTex, IN.worldPos, normalize(IN.worldNormal), offset);
                 // エミッションテクスチャのトライプラナーサンプリング
                 float4 emissionSample = TriplanarSample(_EmissionTex, sampler_EmissionTex, IN.worldPos, normalize(IN.worldNormal), offset);
-                // エミッションカラーと乗算してエミッションを算出
+                // エミッションカラーと乗算してエミッションを算出（HDR対応の値をそのまま反映）
                 float4 emission = emissionSample * _EmissionColor;
-                // 最終出力色として、メインテクスチャの色にエミッションを加算
+                // 最終出力色として、メインテクスチャの色にエミッションを加算（アルファはメインテクスチャの値をそのまま使用）
                 float4 finalColor = baseColor + emission;
-                return half4(finalColor.rgb, baseColor.a);
+                return float4(finalColor.rgb, baseColor.a);
             }
             ENDHLSL
         }

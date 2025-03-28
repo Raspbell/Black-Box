@@ -1,100 +1,32 @@
 using UnityEngine;
-using UniRx;
 using DG.Tweening;
+using UniRx;
 
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] private SO_PlayerStatus playerStatus;
+    public bool hasKey = false;
 
-    private bool isGrounded = false;
+    [SerializeField] private SO_PlayerStatus playerStatus;
+    [SerializeField] private SpriteRenderer questionSpriteRenderer;
+    [SerializeField] private float maxHorizontalSpeed = 5f;
+
+    public bool isGrounded = false;
     private float currentBaseFacing = 180f;
     private Tween turningTween = null;
     private BoxCollider boxCollider;
+    private Rigidbody rb;
+
     private bool isJumpCharging = false;
     private float jumpChargeStartTime = 0f;
 
+    private float horizontalInputValue = 0f;
+    private bool jumpKeyReleased = false;
+    private bool jumpAutoRelease = false;
+
     private void Start()
     {
-        if (GameStateManager.CurrentGameState != GameStateManager.GameState.InGame)
-        {
-            return;
-        }
-
         boxCollider = GetComponent<BoxCollider>();
-
-        Observable.EveryUpdate()
-            .Subscribe(_ =>
-            {
-                float horizontalInput = Input.GetAxis("Horizontal");
-                Vector3 movement = new Vector3(horizontalInput * playerStatus.walkSpeed * Time.deltaTime, 0, 0);
-                transform.Translate(movement, Space.World);
-            })
-            .AddTo(this);
-
-        Observable.EveryUpdate()
-            .Where(_ => Input.GetKeyDown(KeyCode.Space) && isGrounded)
-            .Subscribe(_ =>
-            {
-                jumpChargeStartTime = Time.time;
-                isJumpCharging = true;
-            })
-            .AddTo(this);
-
-        Observable.EveryUpdate()
-            .Where(_ => isJumpCharging && Input.GetKeyUp(KeyCode.Space))
-            .Subscribe(_ =>
-            {
-                float chargeTime = Mathf.Min(Time.time - jumpChargeStartTime, playerStatus.maxJumpChargeTime);
-                float jumpForce = Mathf.Lerp(playerStatus.minJumpPower, playerStatus.maxJumpPower, chargeTime / playerStatus.maxJumpChargeTime);
-                GetComponent<Rigidbody>().AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-                Debug.Log("Jumped " + chargeTime + " seconds charge" + " " + jumpForce + " force");
-                isJumpCharging = false;
-            })
-            .AddTo(this);
-
-        Observable.EveryUpdate()
-            .Where(_ => isJumpCharging && (Time.time - jumpChargeStartTime) >= playerStatus.maxJumpChargeTime)
-            .Subscribe(_ =>
-            {
-                GetComponent<Rigidbody>().AddForce(Vector3.up * playerStatus.maxJumpPower, ForceMode.Impulse);
-                isJumpCharging = false;
-            })
-            .AddTo(this);
-
-        Observable.EveryUpdate()
-            .Subscribe(_ =>
-            {
-                float horizontalInput = Input.GetAxis("Horizontal");
-                if (horizontalInput > 0)
-                {
-                    float targetFacing = 180f;
-                    if (Mathf.Abs(currentBaseFacing - targetFacing) > 0.1f)
-                    {
-                        if (turningTween != null && turningTween.IsActive())
-                        {
-                            turningTween.Kill();
-                        }
-                        turningTween = DOTween.To(() => currentBaseFacing, x => currentBaseFacing = x, targetFacing, playerStatus.turnDuration);
-                    }
-                }
-                else if (horizontalInput < 0)
-                {
-                    float targetFacing = 0f;
-                    if (Mathf.Abs(currentBaseFacing - targetFacing) > 0.1f)
-                    {
-                        if (turningTween != null && turningTween.IsActive())
-                        {
-                            turningTween.Kill();
-                        }
-                        turningTween = DOTween.To(() => currentBaseFacing, x => currentBaseFacing = x, targetFacing, playerStatus.turnDuration);
-                    }
-                }
-                float offset = (Mathf.Abs(horizontalInput) > 0.01f)
-                    ? Mathf.Sin(Time.time * playerStatus.oscillationFrequency) * playerStatus.oscillationAmplitude
-                    : 0f;
-                transform.rotation = Quaternion.Euler(0, currentBaseFacing + offset, 0);
-            })
-            .AddTo(this);
+        rb = GetComponent<Rigidbody>();
 
         Observable.EveryUpdate()
             .Subscribe(_ =>
@@ -144,5 +76,116 @@ public class PlayerController : MonoBehaviour
                 isGrounded = hitDetected;
             })
             .AddTo(this);
+
+        if (GameStateManager.CurrentGameState.Value != GameStateManager.GameState.InGame)
+        {
+            return;
+        }
+    }
+
+    private void Update()
+    {
+        if (GameStateManager.CurrentGameState.Value != GameStateManager.GameState.InGame)
+        {
+            return;
+        }
+
+        horizontalInputValue = Input.GetAxis("Horizontal");
+
+        if (!isJumpCharging && isGrounded && Input.GetKeyDown(KeyCode.Space))
+        {
+            jumpChargeStartTime = Time.time;
+            isJumpCharging = true;
+        }
+
+        if (isJumpCharging && Input.GetKeyUp(KeyCode.Space))
+        {
+            jumpKeyReleased = true;
+        }
+
+        if (isJumpCharging && (Time.time - jumpChargeStartTime) >= playerStatus.maxJumpChargeTime)
+        {
+            jumpAutoRelease = true;
+        }
+
+        if (horizontalInputValue > 0)
+        {
+            float targetFacing = 180f;
+            if (Mathf.Abs(currentBaseFacing - targetFacing) > 0.1f)
+            {
+                if (turningTween != null && turningTween.IsActive())
+                {
+                    turningTween.Kill();
+                }
+                turningTween = DOTween.To(() => currentBaseFacing, x => currentBaseFacing = x, targetFacing, playerStatus.turnDuration);
+            }
+        }
+        else if (horizontalInputValue < 0)
+        {
+            float targetFacing = 0f;
+            if (Mathf.Abs(currentBaseFacing - targetFacing) > 0.1f)
+            {
+                if (turningTween != null && turningTween.IsActive())
+                {
+                    turningTween.Kill();
+                }
+                turningTween = DOTween.To(() => currentBaseFacing, x => currentBaseFacing = x, targetFacing, playerStatus.turnDuration);
+            }
+        }
+        float offset = (Mathf.Abs(horizontalInputValue) > 0.01f)
+            ? Mathf.Sin(Time.time * playerStatus.oscillationFrequency) * playerStatus.oscillationAmplitude
+            : 0f;
+        transform.rotation = Quaternion.Euler(0, currentBaseFacing + offset, 0);
+    }
+
+    private void FixedUpdate()
+    {
+        if (GameStateManager.CurrentGameState.Value != GameStateManager.GameState.InGame)
+        {
+            return;
+        }
+
+        if (Mathf.Abs(horizontalInputValue) > 0.01f)
+        {
+            float appliedSpeed = isGrounded ? playerStatus.walkSpeed : playerStatus.walkSpeed * playerStatus.airControlMultiplier;
+            Vector3 force = new Vector3(horizontalInputValue * appliedSpeed, 0, 0);
+            rb.AddForce(force, ForceMode.Force);
+        }
+
+        if (Mathf.Abs(rb.linearVelocity.x) > maxHorizontalSpeed)
+        {
+            rb.linearVelocity = new Vector3(Mathf.Sign(rb.linearVelocity.x) * maxHorizontalSpeed, rb.linearVelocity.y, rb.linearVelocity.z);
+        }
+
+        if (jumpKeyReleased)
+        {
+            float chargeTime = Mathf.Min(Time.time - jumpChargeStartTime, playerStatus.maxJumpChargeTime);
+            float jumpForce = Mathf.Lerp(playerStatus.minJumpPower, playerStatus.maxJumpPower, chargeTime / playerStatus.maxJumpChargeTime);
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            Debug.Log("Jumped " + chargeTime + " seconds charge" + " " + jumpForce + " force");
+            jumpKeyReleased = false;
+            isJumpCharging = false;
+        }
+        else if (jumpAutoRelease)
+        {
+            rb.AddForce(Vector3.up * playerStatus.maxJumpPower, ForceMode.Impulse);
+            jumpAutoRelease = false;
+            isJumpCharging = false;
+        }
+    }
+
+    public void ShowQuestionAnimation(FukidashiManager fukidashiManager)
+    {
+        questionSpriteRenderer.enabled = true;
+        Vector3 originalScale = questionSpriteRenderer.transform.localScale;
+        Sequence sequence = DOTween.Sequence();
+        sequence.Append(questionSpriteRenderer.transform.DOScale(0.3f, 0.5f));
+        sequence.AppendInterval(1f);
+        sequence.Append(questionSpriteRenderer.transform.DOScale(originalScale, 0.5f));
+        sequence.OnComplete(() =>
+        {
+            questionSpriteRenderer.enabled = false;
+            fukidashiManager.ContinueConversation();
+        });
     }
 }

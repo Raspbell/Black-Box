@@ -22,7 +22,12 @@ public class MaskManager : MonoBehaviour
     private void Start()
     {
         rectTransform = GetComponent<RectTransform>();
-        rectTransform.DOScale(maskScale, 1.5f);
+        rectTransform.DOScale(maskScale, 1.5f)
+            .OnComplete(() =>
+            {
+                FukidashiManager fukidashiManager = FindObjectOfType<FukidashiManager>();
+                fukidashiManager.isFukidashiShowing.Value = true;
+            });
     }
 
     void Update()
